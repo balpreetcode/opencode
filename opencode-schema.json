@@ -367,6 +367,10 @@
             "description": "API key for the provider",
             "type": "string"
           },
+          "baseURL": {
+            "description": "Override API base URL for the provider",
+            "type": "string"
+          },
           "disabled": {
             "default": false,
             "description": "Whether the provider is disabled",

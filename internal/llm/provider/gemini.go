@@ -37,7 +37,11 @@ func newGeminiClient(opts providerClientOptions) GeminiClient {
 		o(&geminiOpts)
 	}
 
-	client, err := genai.NewClient(context.Background(), &genai.ClientConfig{APIKey: opts.apiKey, Backend: genai.BackendGeminiAPI})
+	clientConfig := &genai.ClientConfig{APIKey: opts.apiKey, Backend: genai.BackendGeminiAPI}
+	if baseURL := strings.TrimSpace(opts.baseURL); baseURL != "" {
+		clientConfig.HTTPOptions = genai.HTTPOptions{BaseURL: baseURL}
+	}
+	client, err := genai.NewClient(context.Background(), clientConfig)
 	if err != nil {
 		logging.Error("Failed to create Gemini client", "error", err)
 		return nil

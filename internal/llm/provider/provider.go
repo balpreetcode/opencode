@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/opencode-ai/opencode/internal/llm/models"
 	"github.com/opencode-ai/opencode/internal/llm/tools"
@@ -60,6 +61,7 @@ type Provider interface {
 
 type providerClientOptions struct {
 	apiKey        string
+	baseURL       string
 	model         models.Model
 	maxTokens     int64
 	systemMessage string
@@ -100,6 +102,7 @@ func NewProvider(providerName models.ModelProvider, opts ...ProviderClientOption
 			client:  newAnthropicClient(clientOptions),
 		}, nil
 	case models.ProviderOpenAI:
+		clientOptions.applyOpenAIBaseURL("")
 		return &baseProvider[OpenAIClient]{
 			options: clientOptions,
 			client:  newOpenAIClient(clientOptions),
@@ -115,9 +118,7 @@ func NewProvider(providerName models.ModelProvider, opts ...ProviderClientOption
 			client:  newBedrockClient(clientOptions),
 		}, nil
 	case models.ProviderGROQ:
-		clientOptions.openaiOptions = append(clientOptions.openaiOptions,
-			WithOpenAIBaseURL("https://api.groq.com/openai/v1"),
-		)
+		clientOptions.applyOpenAIBaseURL("https://api.groq.com/openai/v1")
 		return &baseProvider[OpenAIClient]{
 			options: clientOptions,
 			client:  newOpenAIClient(clientOptions),
@@ -133,8 +134,8 @@ func NewProvider(providerName models.ModelProvider, opts ...ProviderClientOption
 			client:  newVertexAIClient(clientOptions),
 		}, nil
 	case models.ProviderOpenRouter:
+		clientOptions.applyOpenAIBaseURL("https://openrouter.ai/api/v1")
 		clientOptions.openaiOptions = append(clientOptions.openaiOptions,
-			WithOpenAIBaseURL("https://openrouter.ai/api/v1"),
 			WithOpenAIExtraHeaders(map[string]string{
 				"HTTP-Referer": "opencode.ai",
 				"X-Title":      "OpenCode",
@@ -145,17 +146,13 @@ func NewProvider(providerName models.ModelProvider, opts ...ProviderClientOption
 			client:  newOpenAIClient(clientOptions),
 		}, nil
 	case models.ProviderXAI:
-		clientOptions.openaiOptions = append(clientOptions.openaiOptions,
-			WithOpenAIBaseURL("https://api.x.ai/v1"),
-		)
+		clientOptions.applyOpenAIBaseURL("https://api.x.ai/v1")
 		return &baseProvider[OpenAIClient]{
 			options: clientOptions,
 			client:  newOpenAIClient(clientOptions),
 		}, nil
 	case models.ProviderLocal:
-		clientOptions.openaiOptions = append(clientOptions.openaiOptions,
-			WithOpenAIBaseURL(os.Getenv("LOCAL_ENDPOINT")),
-		)
+		clientOptions.applyOpenAIBaseURL(os.Getenv("LOCAL_ENDPOINT"))
 		return &baseProvider[OpenAIClient]{
 			options: clientOptions,
 			client:  newOpenAIClient(clientOptions),
@@ -165,6 +162,16 @@ func NewProvider(providerName models.ModelProvider, opts ...ProviderClientOption
 		panic("not implemented")
 	}
 	return nil, fmt.Errorf("provider not supported: %s", providerName)
+}
+
+func (o *providerClientOptions) applyOpenAIBaseURL(defaultBaseURL string) {
+	baseURL := strings.TrimSpace(o.baseURL)
+	if baseURL == "" {
+		baseURL = defaultBaseURL
+	}
+	if baseURL != "" {
+		o.openaiOptions = append(o.openaiOptions, WithOpenAIBaseURL(baseURL))
+	}
 }
 
 func (p *baseProvider[C]) cleanMessages(messages []message.Message) (cleaned []message.Message) {
@@ -195,6 +202,12 @@ func (p *baseProvider[C]) StreamResponse(ctx context.Context, messages []message
 func WithAPIKey(apiKey string) ProviderClientOption {
 	return func(options *providerClientOptions) {
 		options.apiKey = apiKey
+	}
+}
+
+func WithBaseURL(baseURL string) ProviderClientOption {
+	return func(options *providerClientOptions) {
+		options.baseURL = baseURL
 	}
 }
 

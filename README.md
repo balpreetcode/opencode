@@ -118,6 +118,8 @@ You can configure OpenCode using environment variables:
 | `AZURE_OPENAI_API_KEY`     | For Azure OpenAI models (optional when using Entra ID)                           |
 | `AZURE_OPENAI_API_VERSION` | For Azure OpenAI models                                                          |
 | `LOCAL_ENDPOINT`           | For self-hosted models                                                           |
+| `OPENCODE_PROVIDER_BASE_URL` | Override all supported provider API base URLs with a proxy-pass endpoint       |
+| `<PROVIDER>_BASE_URL`      | Override one provider API base URL, e.g. `OPENAI_BASE_URL` or `ANTHROPIC_BASE_URL` |
 | `SHELL`                    | Default shell to use (if not specified in config)                                |
 
 ### Shell Configuration
@@ -147,10 +149,12 @@ This is useful if you want to use a different shell than your default system she
   "providers": {
     "openai": {
       "apiKey": "your-api-key",
+      "baseURL": "https://proxy.example.com/openai/v1",
       "disabled": false
     },
     "anthropic": {
       "apiKey": "your-api-key",
+      "baseURL": "https://proxy.example.com/anthropic",
       "disabled": false
     },
     "copilot": {
