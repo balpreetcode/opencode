@@ -53,6 +53,7 @@ type Agent struct {
 // Provider defines configuration for an LLM provider.
 type Provider struct {
 	APIKey   string `json:"apiKey"`
+	BaseURL  string `json:"baseURL,omitempty"`
 	Disabled bool   `json:"disabled"`
 }
 
@@ -253,6 +254,8 @@ func setDefaults(debug bool) {
 // setProviderDefaults configures LLM provider defaults based on provider provided by
 // environment variables and configuration file.
 func setProviderDefaults() {
+	setProviderBaseURLDefaults()
+
 	// Set all API keys we can find in the environment
 	// Note: Viper does not default if the json apiKey is ""
 	if apiKey := os.Getenv("ANTHROPIC_API_KEY"); apiKey != "" {
@@ -383,6 +386,29 @@ func setProviderDefaults() {
 		viper.SetDefault("agents.task.model", models.VertexAIGemini25Flash)
 		viper.SetDefault("agents.title.model", models.VertexAIGemini25Flash)
 		return
+	}
+}
+
+func setProviderBaseURLDefaults() {
+	setProviderBaseURLDefault(string(models.ProviderAnthropic), "ANTHROPIC_BASE_URL", "ANTHROPIC_API_BASE_URL")
+	setProviderBaseURLDefault(string(models.ProviderOpenAI), "OPENAI_BASE_URL", "OPENAI_API_BASE_URL")
+	setProviderBaseURLDefault(string(models.ProviderGemini), "GEMINI_BASE_URL", "GEMINI_API_BASE_URL", "GOOGLE_GEMINI_BASE_URL")
+	setProviderBaseURLDefault(string(models.ProviderGROQ), "GROQ_BASE_URL", "GROQ_API_BASE_URL")
+	setProviderBaseURLDefault(string(models.ProviderOpenRouter), "OPENROUTER_BASE_URL", "OPENROUTER_API_BASE_URL")
+	setProviderBaseURLDefault(string(models.ProviderXAI), "XAI_BASE_URL", "XAI_API_BASE_URL")
+	setProviderBaseURLDefault(string(models.ProviderCopilot), "COPILOT_BASE_URL", "COPILOT_API_BASE_URL")
+}
+
+func setProviderBaseURLDefault(provider string, envNames ...string) {
+	for _, envName := range envNames {
+		if baseURL := strings.TrimSpace(os.Getenv(envName)); baseURL != "" {
+			viper.SetDefault(fmt.Sprintf("providers.%s.baseURL", provider), baseURL)
+			return
+		}
+	}
+
+	if baseURL := strings.TrimSpace(os.Getenv("OPENCODE_PROVIDER_BASE_URL")); baseURL != "" {
+		viper.SetDefault(fmt.Sprintf("providers.%s.baseURL", provider), baseURL)
 	}
 }
 

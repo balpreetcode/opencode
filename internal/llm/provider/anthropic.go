@@ -45,6 +45,9 @@ func newAnthropicClient(opts providerClientOptions) AnthropicClient {
 	if opts.apiKey != "" {
 		anthropicClientOptions = append(anthropicClientOptions, option.WithAPIKey(opts.apiKey))
 	}
+	if baseURL := strings.TrimSpace(opts.baseURL); baseURL != "" {
+		anthropicClientOptions = append(anthropicClientOptions, option.WithBaseURL(baseURL))
+	}
 	if anthropicOpts.useBedrock {
 		anthropicClientOptions = append(anthropicClientOptions, bedrock.WithLoadDefaultConfig(context.Background()))
 	}

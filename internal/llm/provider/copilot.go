@@ -8,6 +8,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/openai/openai-go"
@@ -154,8 +155,10 @@ func newCopilotClient(opts providerClientOptions) CopilotClient {
 
 	copilotOpts.bearerToken = bearerToken
 
-	// GitHub Copilot API base URL
 	baseURL := "https://api.githubcopilot.com"
+	if configuredBaseURL := strings.TrimSpace(opts.baseURL); configuredBaseURL != "" {
+		baseURL = configuredBaseURL
+	}
 
 	openaiClientOptions := []option.RequestOption{
 		option.WithBaseURL(baseURL),
@@ -668,4 +671,3 @@ func WithCopilotBearerToken(bearerToken string) CopilotOption {
 		options.bearerToken = bearerToken
 	}
 }
-
